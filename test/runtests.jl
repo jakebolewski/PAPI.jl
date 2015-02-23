@@ -1,5 +1,6 @@
 using PAPI
-using Base.Test
+using FactCheck
 
-# write your own tests here
-@test 1 == 1
+facts("PAPI libary") do
+    @fact 1 == 1 => true
+end
