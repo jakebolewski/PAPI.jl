@@ -6,13 +6,26 @@ module PAPI
 include("counters.jl")
 include("retcodes.jl")
 
-function __init__()
-end
-
 immutable PAPIError{R} <: Exception
     msg::String
 end
 PAPIError(R::RetCode) = PAPIError{R}(errmsg(R))
+
+function __init__()
+    if num_counters() <= 0
+        error("PAPI init error: No counters are available on the current system")
+    end
+end
+
+type CounterSet
+    counters::Vector{Counter}
+    vals::Vector{Clonglong}
+
+    CounterSet(c::Vector{Counter}) = begin
+        cs = new(c, zeros(Clonglong, length(c)))
+        return cs
+    end
+end
 
 #### High Level Interface ####
 
@@ -32,13 +45,14 @@ num_counters() = Int(ccall((:PAPI_num_counters, :libpapi), Cint, ()))
 @doc """
 Add current counts to array and reset counters
 """ ->
-function accum_counters(values)
+function accum_counters!(values::Vector{Clonglong})
     ret = RetCode(ccall((:PAPI_accum_counters, :libpapi), Cint, 
                         (Ptr{Clonglong}, Cint), values, length(values)))
     if ret != OK
         throw(PAPIError(ret))
     end
 end
+accum_counters!(cs::CounterSet) = (accum_counters!(cs::CounterSet); c)
 
 @doc """
 Get the number of components available on the system
@@ -47,13 +61,14 @@ num_components() = Int(ccall((:PAPI_num_components, :libpapi), Cint, ()))
 
 @doc """
 """ ->
-function read_counters(values)
+function read_counters!(values::Vector{Clonglong})
     ret = RetCode(ccall((:PAPI_read_counters, :libpapi), Cint,
                         (Ptr{Clonglong}, Cint), values, length(values)))
     if ret != OK
         throw(PAPIError(ret))
     end
 end
+read_counters!(c::CounterSet) = (read_counters!(c.values); c)
 
 @doc """
 Start counting hardware events
