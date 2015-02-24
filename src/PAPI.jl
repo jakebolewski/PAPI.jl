@@ -3,6 +3,7 @@ module PAPI
 @osx_only error("PAPI.jl currently only works on Linux")
 @windows_only error("PAPI.jl currently only works on Linux")
 
+include("counters.jl")
 include("retcodes.jl")
 
 function __init__()
