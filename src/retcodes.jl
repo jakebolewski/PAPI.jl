@@ -26,3 +26,35 @@
       ECOUNT = -23,     # Too many events or attributes */attributes
       ECOMBO =  -24,    # Bad combination of  features
 )
+
+let msgs = Dict{RetCode,ASCIIString}(
+    OK => "OK",
+    EINVAL => "Invalid argument",
+    ENOMEM => "Insufficient memory",
+    ESYS => "A System C library call failed",
+    ECMP => "Not supported by component",
+    ECLOST => "Access to the counters was lost or interrupted",
+    EBUG => "Internal error, please send mail to the developers",
+    ENOEVNT => "Event does not exist",
+    ECNFLCT => "Event exists, but cannot be counted due to counter resource limitations",
+    ENOTRUN => "EventSet is currently not running",
+    EISRUN => "EventSet is currently counting",
+    ENOEVST => "No such EventSet Available",
+    ENOTPRESET => "Event in argument is not a valid preset",
+    ENOCNTR => "Hardware does not support performance counters",
+    EMISC => "Unknown error code",
+    EPERM => "Permission level does not permit operation",
+    ENOINIT => "PAPI hasn't been initialized yet",
+    ENOCMP => "Component Index isn't set",
+    ENOSUPP => "Not supported",
+    ENOIMPL => "Not implemented",
+    EBUF => "Buffer size exceeded",
+    EINVAL_DOM => "EventSet domain is not supported for the operation",
+    EATTR => "Invalid or missing event attributes",
+    ECOUNT => "Too many events or attributes",
+    ECOMBO => "Bad combination of  features"
+    )
+
+    global errmsg
+    errmsg(r::RetCode) = msgs[r]
+end

@@ -9,6 +9,11 @@ include("retcodes.jl")
 function __init__()
 end
 
+immutable PAPIError{R} <: Exception
+    msg::String
+end
+PAPIError(R::RetCode) = PAPIError{R}(errmsg(R))
+
 #### High Level Interface ####
 
 @doc """
@@ -28,8 +33,11 @@ num_counters() = Int(ccall((:PAPI_num_counters, :libpapi), Cint, ()))
 Add current counts to array and reset counters
 """ ->
 function accum_counters(values)
-    return ccall((:PAPI_accum_counters, :libpapi), Cint, 
-                 (Ptr{Clonglong}, Cint), values, length(values))
+    ret = RetCode(ccall((:PAPI_accum_counters, :libpapi), Cint, 
+                        (Ptr{Clonglong}, Cint), values, length(values)))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
 end
 
 @doc """
@@ -40,8 +48,11 @@ num_components() = Int(ccall((:PAPI_num_components, :libpapi), Cint, ()))
 @doc """
 """ ->
 function read_counters(values)
-    ccall((:PAPI_read_counters, :libpapi), Cint,
-          (Ptr{Clonglong}, Cint), values, length(values))
+    ret = RetCode(ccall((:PAPI_read_counters, :libpapi), Cint,
+                        (Ptr{Clonglong}, Cint), values, length(values)))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
 end
 
 @doc """
@@ -53,53 +64,71 @@ It is the user's responsibility to choose events that can be counted simultaneou
 The number of events should be no larger than the value returned by `PAPI.num_counters()`. 
 """ ->
 function start_counters(events) 
-    return ccall((:PAPI_start_counters, :libpapi), Cint, 
-                 (Ptr{Cint}, Cint), events, length(events))
+    ret = RetCode(ccall((:PAPI_start_counters, :libpapi), Cint, 
+                        (Ptr{Cint}, Cint), events, length(events)))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
 end
 
 @doc """
 Stop counters and return current counts
 """ ->
 function stop_counters(events) 
-    return ccall((:PAPI_stop_counters, :libpapi), Cint, 
-                 (Ptr{Cint}, Cint), events, length(events))
+    ret = RetCode(ccall((:PAPI_stop_counters, :libpapi), Cint, 
+                        (Ptr{Cint}, Cint), events, length(events)))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
 end
 
 @doc """
 Get Mflips/s (floating point instruction rate), real time and processor time
 """ ->
 function flips(rtime, flatptime, flpins, mflips)
-    return ccall((:PAPI_flips, :libpapi), Cint,
-                 (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, Ptr{Cfloat}),
-                 rtime, floatptime, flpins, mflips)
+    ret = RetCode(ccall((:PAPI_flips, :libpapi), Cint,
+                        (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, Ptr{Cfloat}),
+                        rtime, floatptime, flpins, mflips))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
 end
 
 @doc """
 Get Mflop/s (floating point operand rate), real time and processor time
 """ ->
 function flops(rtimee, ptime, flpops, mflops)
-    return ccall((:PAPI_flops, :libpapi), Cint,
-                 (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, Ptr{Cfloat}),
-                 rtimee, ptime, flpops, mflops)
+    ret = RetCode(ccall((:PAPI_flops, :libpapi), Cint,
+                        (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, Ptr{Cfloat}),
+                        rtimee, ptime, flpops, mflops))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
 end
 
 @doc """
 Get instructions per cycle, real time and processor time
 """ ->
 function ipc(rtime, ptime, ins, ipc)
-    return ccall((:PAPI_ipc, :libpapi), Cint,
-                 (Ptr{Void}, Ptr{Cfloat}, Ptr{Clonglong}, Ptr{Cfloat}),
-                 rtime, ptime, ins, ipc)
+    ret = RetCode(ccall((:PAPI_ipc, :libpapi), Cint,
+                        (Ptr{Void}, Ptr{Cfloat}, Ptr{Clonglong}, Ptr{Cfloat}),
+                        rtime, ptime, ins, ipc))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
 end
 
 @doc """
 Get events per cycle, real time and processor time
 """ ->
 function epc(event, rtime, ptime, ref, core, evt, epc)
-    return ccall((:PAPI_epc, :libpapi), Cint,
-                 (Cint, Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, 
-                  Ptr{Clonglong}, Ptr{Clonglong}, Ptr{Cfloat}),
-                 event, rtime, ptime, ref, core, evt, epc)
+    ret = RetCode(ccall((:PAPI_epc, :libpapi), Cint,
+                        (Cint, Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, 
+                         Ptr{Clonglong}, Ptr{Clonglong}, Ptr{Cfloat}),
+                        event, rtime, ptime, ref, core, evt, epc))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
 end  
 
 end # module
