@@ -1,6 +1,6 @@
 import PAPI
 
-function main(ctrs...)
+function main()
     cs = PAPI.CounterSet([PAPI.TOT_INS])
  
     PAPI.start_counters(cs)
