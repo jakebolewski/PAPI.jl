@@ -12,8 +12,12 @@ end
 PAPIError(R::RetCode) = PAPIError{R}(errmsg(R))
 
 function __init__()
+    # init the library and make sure that some counters are available
     if num_counters() <= 0
         error("PAPI init error: No counters are available on the current system")
+    end
+    atexit() do
+        ccall((:PAPI_shutdown, :libpapi), Void, ())
     end
 end
 
@@ -102,10 +106,40 @@ stop_counters(cs::CounterSet) = stop_counters(cs.counters)
 @doc """
 Get Mflips/s (floating point instruction rate), real time and processor time
 """ ->
-function flips(rtime, flatptime, flpins, mflips)
+function flips!(rtime, ptime, flpins, mflips)
     ret = RetCode(ccall((:PAPI_flips, :libpapi), Cint,
                         (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, Ptr{Cfloat}),
-                        rtime, floatptime, flpins, mflips))
+                        rtime, ptime, flpins, mflips))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
+end
+
+@doc """
+Get Mflips/s (floating point instruction rate), real time and processor time
+""" ->
+const flips = let rtime = Cfloat[0.0], 
+                  ptime = Cfloat[0.0],
+                  flpins = Clonglong[0], 
+                  mflips = Cfloat[0.0]
+    
+     flips() = begin
+        flips!(rtime, ptime, flpins, mflips)
+        return (rtime[1], ptime[1], flpins[1], mflips[1])
+    end
+end
+
+macro flips(blk)
+    :(PAPI.flips(); $(esc(blk)); PAPI.flips())
+end
+
+@doc """
+Get Mflop/s (floating point operand rate), real time and processor time
+""" ->
+function flops!(rtime, ptime, flpops, mflops)
+    ret = RetCode(ccall((:PAPI_flops, :libpapi), Cint,
+                        (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, Ptr{Cfloat}),
+                        rtime, ptime, flpops, mflops))
     if ret != OK
         throw(PAPIError(ret))
     end
@@ -114,14 +148,20 @@ end
 @doc """
 Get Mflop/s (floating point operand rate), real time and processor time
 """ ->
-function flops(rtimee, ptime, flpops, mflops)
-    ret = RetCode(ccall((:PAPI_flops, :libpapi), Cint,
-                        (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, Ptr{Cfloat}),
-                        rtimee, ptime, flpops, mflops))
-    if ret != OK
-        throw(PAPIError(ret))
+const flops = let rtime = Cfloat[0.0], 
+                  ptime = Cfloat[0.0],
+                  flpops = Clonglong[0], 
+                  mflops = Cfloat[0.0]
+    flops() = begin
+        flops!(rtime, ptime, flpops, mflops)
+        return (rtime[1], ptime[1], flpops[1], mflops[1])
     end
 end
+ 
+macro flops(blk)
+    :(PAPI.flops(); $(esc(blk)); PAPI.flops())
+end
+
 
 @doc """
 Get instructions per cycle, real time and processor time

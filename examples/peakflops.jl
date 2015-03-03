@@ -5,7 +5,7 @@ function main()
  
     PAPI.start_counters(cs)
     start = PAPI.read_counters!(cs)
-
+    
     peakflops()
 
     stop = PAPI.accum_counters!(cs)
