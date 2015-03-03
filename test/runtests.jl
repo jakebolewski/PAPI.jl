@@ -3,7 +3,7 @@ using FactCheck
 
 facts("PAPI library") do
     context("initialized") do
-        @fact PAPI.is_initialized() => false
+        @fact PAPI.is_initialized() => true
     end
 end
 
