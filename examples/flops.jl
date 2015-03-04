@@ -9,10 +9,8 @@ function slow_code()
 end
 
 function driver()
-    cnts = @PAPI.flops begin
-        slow_code()
-    end
-    real_time, proc_time, flpops, mflops = cnts
+    real_time, proc_time, flpops, mflops = 
+        @PAPI.flops slow_code()
     @printf("Real_time: %f Proc_time: %f Total flpops: %lld MFLOPS: %f\n", 
              real_time, proc_time, flpops, mflops)
 end
