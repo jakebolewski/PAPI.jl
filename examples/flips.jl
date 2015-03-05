@@ -8,10 +8,10 @@ function slow_code()
     return tmp
 end
 
-function driver()
-    real_time, proc_time, flpins, mflips = 
-        @PAPI.flips slow_code()
+function main()
+    real_time, proc_time, flpins, mflips = @PAPI.flips slow_code()
     @printf("Real_time: %f Proc_time: %f Total flpins: %lld MFLIPS: %f\n", 
              real_time, proc_time, flpins, mflips)
 end
-driver()
+
+main()

@@ -34,15 +34,15 @@ end
 #### High Level Interface ####
 
 @doc """
-""" -> 
+""" ->
 is_initialized() = Bool(ccall((:PAPI_is_initialized, :libpapi), Cint, ()))
 
 @doc """
 Get the number of hardware counters available on the system
 
 `PAPI.num_counters()` returns the optimal length of the values array for high-level functions.
-This value corresponds to the number of hardware counters supported by the current substrate. 
-`PAPI.num_counters()` initializes the PAPI library using `PAPI.library_init()` if necessary. 
+This value corresponds to the number of hardware counters supported by the current substrate.
+`PAPI.num_counters()` initializes the PAPI library using `PAPI.library_init()` if necessary.
 """ ->
 num_counters() = Int(ccall((:PAPI_num_counters, :libpapi), Cint, ()))
 
@@ -50,7 +50,7 @@ num_counters() = Int(ccall((:PAPI_num_counters, :libpapi), Cint, ()))
 Add current counts to array and reset counters
 """ ->
 function accum_counters!(values::Vector{Clonglong})
-    ret = RetCode(ccall((:PAPI_accum_counters, :libpapi), Cint, 
+    ret = RetCode(ccall((:PAPI_accum_counters, :libpapi), Cint,
                         (Ptr{Clonglong}, Cint), values, length(values)))
     if ret != OK
         throw(PAPIError(ret))
@@ -77,13 +77,13 @@ read_counters!(cs::CounterSet) = (read_counters!(cs.vals); copy(cs.vals))
 @doc """
 Start counting hardware events
 
-`PAPI.start_counters()` initializes the PAPI library (if necessary) and starts counting the events named in the events array. 
-This function implicitly stops and initializes any counters running as a result of a previous call to `PAPI.start_counters()`. 
+`PAPI.start_counters()` initializes the PAPI library (if necessary) and starts counting the events named in the events array.
+This function implicitly stops and initializes any counters running as a result of a previous call to `PAPI.start_counters()`.
 It is the user's responsibility to choose events that can be counted simultaneously by reading the vendor's documentation.
-The number of events should be no larger than the value returned by `PAPI.num_counters()`. 
+The number of events should be no larger than the value returned by `PAPI.num_counters()`.
 """ ->
-function start_counters(events::Vector{Counter}) 
-    ret = RetCode(ccall((:PAPI_start_counters, :libpapi), Cint, 
+function start_counters(events::Vector{Counter})
+    ret = RetCode(ccall((:PAPI_start_counters, :libpapi), Cint,
                         (Ptr{Cint}, Cint), pointer(events), length(events)))
     if ret != OK
         throw(PAPIError(ret))
@@ -94,8 +94,8 @@ start_counters(cs::CounterSet) = start_counters(cs.counters)
 @doc """
 Stop counters and return current counts
 """ ->
-function stop_counters(events::Vector{Counter}) 
-    ret = RetCode(ccall((:PAPI_stop_counters, :libpapi), Cint, 
+function stop_counters(events::Vector{Counter})
+    ret = RetCode(ccall((:PAPI_stop_counters, :libpapi), Cint,
                         (Ptr{Cint}, Cint), pointer(events), length(events)))
     if ret != OK
         throw(PAPIError(ret))
@@ -118,11 +118,11 @@ end
 @doc """
 Get Mflips/s (floating point instruction rate), real time and processor time
 """ ->
-const flips = let rtime = Cfloat[0.0], 
+const flips = let rtime = Cfloat[0.0],
                   ptime = Cfloat[0.0],
-                  flpins = Clonglong[0], 
+                  flpins = Clonglong[0],
                   mflips = Cfloat[0.0]
-    
+
      flips() = begin
         flips!(rtime, ptime, flpins, mflips)
         return (rtime[1], ptime[1], flpins[1], mflips[1])
@@ -148,16 +148,16 @@ end
 @doc """
 Get Mflop/s (floating point operand rate), real time and processor time
 """ ->
-const flops = let rtime = Cfloat[0.0], 
+const flops = let rtime = Cfloat[0.0],
                   ptime = Cfloat[0.0],
-                  flpops = Clonglong[0], 
+                  flpops = Clonglong[0],
                   mflops = Cfloat[0.0]
     flops() = begin
         flops!(rtime, ptime, flpops, mflops)
         return (rtime[1], ptime[1], flpops[1], mflops[1])
     end
 end
- 
+
 macro flops(blk)
     :(PAPI.flops(); $(esc(blk)); PAPI.flops())
 end
@@ -180,12 +180,12 @@ Get events per cycle, real time and processor time
 """ ->
 function epc(event, rtime, ptime, ref, core, evt, epc)
     ret = RetCode(ccall((:PAPI_epc, :libpapi), Cint,
-                        (Cint, Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, 
+                        (Cint, Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong},
                          Ptr{Clonglong}, Ptr{Clonglong}, Ptr{Cfloat}),
                         event, rtime, ptime, ref, core, evt, epc))
     if ret != OK
         throw(PAPIError(ret))
     end
-end  
+end
 
 end # module

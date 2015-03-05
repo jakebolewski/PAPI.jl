@@ -41,7 +41,7 @@
     STL_CCY, # Cycles with No Instruction Completion
     FUL_CCY, # Cycles with Maximum Instruction Completion
     HW_INT,  # Hardware interrupts
-    BR_UCN,   # Unconditional branch instructions executed
+    BR_UCN,  # Unconditional branch instructions executed
     BR_CN,   # Conditional branch instructions executed
     BR_TKN,  # Conditional branch instructions taken
     BR_NTK,  # Conditional branch instructionsructions not taken
@@ -53,7 +53,7 @@
     INT_INS, # Integer instructions executed executed
     FP_INS,  # Floating point instructions executed
     LD_INS,  # Load instructions executed
-    SR_INS,  # Store instructionsns executed
+    SR_INS,  # Store instructions executed
     BR_INS,  # Total branch instructions executed
     VEC_INS, # Vector/SIMD instructions executed (could include integer)
     RES_STL, # Cycles processor is stalled on resource
