@@ -3,7 +3,7 @@ module PAPI
 @osx_only error("PAPI.jl currently only works on Linux")
 @windows_only error("PAPI.jl currently only works on Linux")
 
-include("counters.jl")
+include("events.jl")
 include("retcodes.jl")
 
 immutable PAPIError{R} <: Exception
@@ -21,11 +21,11 @@ function __init__()
     end
 end
 
-type CounterSet
-    counters::Vector{Counter}
+type EventSet
+    counters::Vector{Event}
     vals::Vector{Clonglong}
 
-    CounterSet(c::Vector{Counter}) = begin
+    EventSet(c::Vector{Event}) = begin
         cs = new(c, zeros(Clonglong, length(c)))
         return cs
     end
@@ -56,7 +56,7 @@ function accum_counters!(values::Vector{Clonglong})
         throw(PAPIError(ret))
     end
 end
-accum_counters!(cs::CounterSet) = (accum_counters!(cs.vals); copy(cs.vals))
+accum_counters!(cs::EventSet) = (accum_counters!(cs.vals); copy(cs.vals))
 
 @doc """
 Get the number of components available on the system
@@ -72,7 +72,7 @@ function read_counters!(values::Vector{Clonglong})
         throw(PAPIError(ret))
     end
 end
-read_counters!(cs::CounterSet) = (read_counters!(cs.vals); copy(cs.vals))
+read_counters!(cs::EventSet) = (read_counters!(cs.vals); copy(cs.vals))
 
 @doc """
 Start counting hardware events
@@ -82,26 +82,26 @@ This function implicitly stops and initializes any counters running as a result 
 It is the user's responsibility to choose events that can be counted simultaneously by reading the vendor's documentation.
 The number of events should be no larger than the value returned by `PAPI.num_counters()`.
 """ ->
-function start_counters(events::Vector{Counter})
+function start_counters(events::Vector{Event})
     ret = RetCode(ccall((:PAPI_start_counters, :libpapi), Cint,
                         (Ptr{Cint}, Cint), pointer(events), length(events)))
     if ret != OK
         throw(PAPIError(ret))
     end
 end
-start_counters(cs::CounterSet) = start_counters(cs.counters)
+start_counters(cs::EventSet) = start_counters(cs.counters)
 
 @doc """
 Stop counters and return current counts
 """ ->
-function stop_counters(events::Vector{Counter})
+function stop_counters(events::Vector{Event})
     ret = RetCode(ccall((:PAPI_stop_counters, :libpapi), Cint,
                         (Ptr{Cint}, Cint), pointer(events), length(events)))
     if ret != OK
         throw(PAPIError(ret))
     end
 end
-stop_counters(cs::CounterSet) = stop_counters(cs.counters)
+stop_counters(cs::EventSet) = stop_counters(cs.counters)
 
 @doc """
 Get Mflips/s (floating point instruction rate), real time and processor time

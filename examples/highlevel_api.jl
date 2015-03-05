@@ -23,10 +23,10 @@ function main()
 
     # Precompile functions so that we are also not
     # measuring compilation overhead
-    precompile(computation_add,())
+    precompile(computation_add, ())
     precompile(computation_mult,())
 
-    cs = PAPI.CounterSet([PAPI.TOT_INS, PAPI.TOT_CYC])
+    cs = PAPI.EventSet([PAPI.TOT_INS, PAPI.TOT_CYC])
 
     info("There are $(PAPI.num_counters()) counters on this system")
 

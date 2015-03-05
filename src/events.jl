@@ -1,4 +1,4 @@
-@enum(Counter,
+@enum(Event,
     L1_DCM = 0x80000000,  # Level 1 data cache misses
     L1_ICM,  # Level 1 instruction cache misses
     L2_DCM,  # Level 2 data cache misses
