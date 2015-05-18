@@ -2,7 +2,7 @@ import PAPI
 
 function slow_code()
     tmp = 1.1
-    for i=1:2_000_000
+    for i=1:200_000_000
         tmp = (tmp+100)/i
     end
     return tmp

@@ -11,6 +11,8 @@ immutable PAPIError{R} <: Exception
 end
 PAPIError(R::RetCode) = PAPIError{R}(errmsg(R))
 
+const PAPI_NULL = Cint(-1)
+
 function __init__()
     # init the library and make sure that some counters are available
     if num_counters() <= 0
@@ -29,6 +31,24 @@ type EventSet
         cs = new(c, zeros(Clonglong, length(c)))
         return cs
     end
+end
+
+immutable PAPIEventSet
+    val::Cint
+    PAPIEventSet() = new(PAPI_NULL)
+end
+
+# TODO Low Level API
+function exists(evt::Event)
+    evtset = Ref(PAPIEventSet())
+    ret = RetCode(ccall((:PAPI_create_eventset, :libpapi), Cint,
+                        (Ref{PAPIEventSet},), evtset))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
+    ret = RetCode(ccall((:PAPI_query_event, :libpapi), Cint,
+                        (Cuint,), evt))
+    return ret == OK
 end
 
 #### High Level Interface ####
