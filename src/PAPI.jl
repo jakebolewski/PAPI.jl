@@ -11,8 +11,6 @@ immutable PAPIError{R} <: Exception
 end
 PAPIError(R::RetCode) = PAPIError{R}(errmsg(R))
 
-const PAPI_NULL = Cint(-1)
-
 function __init__()
     # init the library and make sure that some counters are available
     if num_counters() <= 0
@@ -33,6 +31,9 @@ type EventSet
     end
 end
 
+# a nonexistent hardware event used as a placeholder
+const PAPI_NULL = Cint(-1)
+
 immutable PAPIEventSet
     val::Cint
     PAPIEventSet() = new(PAPI_NULL)
@@ -49,6 +50,27 @@ function exists(evt::Event)
     ret = RetCode(ccall((:PAPI_query_event, :libpapi), Cint,
                         (Cuint,), evt))
     return ret == OK
+end
+
+function start(evts::Event...)
+    nevts = length(evts)
+    if nevts == 0
+        throw(ArgumentError("one or more PAPI.Events required"))
+    end
+    ncounters = num_counters()
+    if nevts > ncounters
+        throw(ArgumentError("number of PAPI.Events must be ≤ PAPI.num_counters(), got $nevts"))
+    end
+    evtcodes = Array(Cuint, nevts)
+    for i = 1:length(nevts)
+        evtcodes[i] = Cuint(evts[i])
+    end
+    ret = RetCode(ccall((:PAPI_start_counters, :libpapi), Cint,
+                        (Ptr{Cuint}, Cint), evtcodes, nevts))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
+    return
 end
 
 #### High Level Interface ####
@@ -114,9 +136,16 @@ start_counters(cs::EventSet) = start_counters(cs.counters)
 @doc """
 Stop counters and return current counts
 """ ->
+function stop_counters()
+    ret = RetCode(ccall((:PAPI_stop_counters, :libpapi), Cint,
+                        (Ptr{Cuint}, Cint), C_NULL, 0))
+    if ret != OK
+        throw(PAPIError(ret))
+    end
+end
 function stop_counters(events::Vector{Event})
     ret = RetCode(ccall((:PAPI_stop_counters, :libpapi), Cint,
-                        (Ptr{Cint}, Cint), pointer(events), length(events)))
+                        (Ptr{Cuint}, Cint), pointer(events), length(events)))
     if ret != OK
         throw(PAPIError(ret))
     end
@@ -159,7 +188,7 @@ end
 @doc """
 Get Mflop/s (floating point operand rate), real time and processor time
 """ ->
-function flops!(rtime, ptime, flpops, mflops)
+function flops!(flpops, mflops, rtime, ptime)
     ret = RetCode(ccall((:PAPI_flops, :libpapi), Cint,
                         (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, Ptr{Cfloat}),
                         rtime, ptime, flpops, mflops))
@@ -172,18 +201,19 @@ end
 Get Mflop/s (floating point operand rate), real time and processor time
 """ ->
 function flops()
-    flops!(_rtime, _ptime, _flpx, _mflpx)
-    return (_rtime[1], _ptime[1], _flpx[1], _mflpx[1])
+    flops!(_flpx, _mflpx, _rtime, _ptime)
+    return (_flpx[1], _mflpx[1], _rtime[1], _ptime[1])
 end
 
 macro flops(blk)
     quote
         PAPI.flops()
         $(esc(blk))
-        PAPI.flops()
+        local res = PAPI.flops()
+        PAPI.stop_counters([PAPI.FP_OPS])
+        res
     end
 end
-
 
 @doc """
 Get instructions per cycle, real time and processor time
