@@ -160,7 +160,7 @@ const _mflpx = Cfloat[0.0]
 @doc """
 Get Mflips/s (floating point instruction rate), real time and processor time
 """ ->
-function flips!(rtime, ptime, flpins, mflips)
+function flips!(flpins, mflips, rtime, ptime)
     ret = RetCode(ccall((:PAPI_flips, :libpapi), Cint,
                         (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Clonglong}, Ptr{Cfloat}),
                         rtime, ptime, flpins, mflips))
@@ -173,15 +173,17 @@ end
 Get Mflips/s (floating point instruction rate), real time and processor time
 """ ->
 function flips()
-    flips!(_rtime, _ptime, _flpx, _mflpx)
-    return (_rtime[1], _ptime[1], _flpx[1], _mflpx[1])
+    flips!(_flpx, _mflpx, _rtime, _ptime)
+    return (_flpx[1], _mflpx[1], _rtime[1], _ptime[1])
 end
 
 macro flips(blk)
     quote
         PAPI.flips()
         $(esc(blk))
-        PAPI.flips()
+        local res = PAPI.flips()
+        PAPI.stop_counters([PAPI.FP_INS])
+        ret
     end
 end
 

@@ -11,7 +11,7 @@ end
 function main()
     precompile(slow_code, ())
 
-    real_time, proc_time, flpins, mflips = @PAPI.flips slow_code()
+    flpins, mflips, real_time, proc_time = @PAPI.flips slow_code()
 
     @printf("Real_time: %f Proc_time: %f Total flpins: %lld MFLIPS: %f\n",
              real_time, proc_time, flpins, mflips)
