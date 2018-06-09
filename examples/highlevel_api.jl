@@ -1,7 +1,8 @@
-import PAPI
+# import PAPI
 
-const NUM_EVENTS = 2
-const THRESHOLD = 10_000
+include("./src/PAPI.jl");
+
+const THRESHOLD = 10000
 
 function computation_mult()
     tmp = 1.0
@@ -14,7 +15,7 @@ end
 function computation_add()
     tmp = 0
     for i=1:THRESHOLD
-        tmp += i
+        tmp += 1
     end
     return tmp
 end
@@ -26,7 +27,7 @@ function main()
     precompile(computation_add, ())
     precompile(computation_mult,())
 
-    cs = PAPI.EventSet([PAPI.TOT_INS, PAPI.TOT_CYC])
+    cs = PAPI.EventSet([PAPI.TOT_INS])
 
     info("There are $(PAPI.num_counters()) counters on this system")
 
@@ -39,12 +40,16 @@ function main()
     info("Counters started")
     PAPI.start_counters(cs)
 
-    computation_add()
+    retval = computation_add()
+    sleep(3)
 
     values = PAPI.read_counters!(cs)
 
+    PAPI.stop_counters(cs)
+    # @printf("%d",retval);
+
     @printf("The total instructions executed for addition are %lld \n",values[1]);
-    @printf("The total cycles used are %lld \n", values[2] );
+    # @printf("The total cycles used are %lld \n", values[2] );
 end
 
 main()
