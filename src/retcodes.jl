@@ -27,7 +27,7 @@
       ECOMBO =  -24,    # Bad combination of  features
 )
 
-const errmsg = let msgs = Dict{RetCode,ASCIIString}(
+const errmsg = let msgs = Dict{RetCode,String}(
         OK => "OK",
         EINVAL => "Invalid argument",
         ENOMEM => "Insufficient memory",

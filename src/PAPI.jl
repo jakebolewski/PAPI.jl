@@ -1,7 +1,12 @@
 module PAPI
 
-@osx_only error("PAPI.jl currently only works on Linux")
-@windows_only error("PAPI.jl currently only works on Linux")
+@static if is_apple()
+     error("PAPI.jl currently only works on Linux")
+end
+
+@static if is_windows()
+    error("PAPI.jl currently only works on Linux")
+end
 
 include("events.jl")
 include("retcodes.jl")
